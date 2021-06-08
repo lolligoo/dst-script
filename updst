@@ -1,0 +1,48 @@
+#!/bin/bash
+
+old_version=$(cat ~/Steam/steamapps/common/DST_Public/version.txt)
+
+cd steamcmd/
+	./steamcmd.sh +@ShutdownOnFailedCommand 1 +@NoPromptForPassword 1 +login anonymous +force_install_dir "$HOME/Steam/steamapps/common/DST_Public" +app_update 343050 +quit
+
+new_version=$(cat ~/Steam/steamapps/common/DST_Public/version.txt)
+echo "old_version=$old_version&&new_version=$new_version"
+if [[ "$old_version" != "$new_version" ]]; then
+	if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then   									        
+	    screen -S "DST_Master" -p 0 -X stuff "c_announce(\"服务器需要重启更新，20s后重启，预计耗时三分钟！\")$(printf \\r)"	
+	fi
+	if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then						        
+		screen -S "DST_Caves" -p 0 -X stuff "c_announce(\"服务器有更新，20s后重启，预计耗时三分钟！\")$(printf \\r)"
+	fi
+	echo "announce"
+	sleep 20;
+	if [[ $(screen -ls | grep -c "DST_Master") > 0 || $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+		if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then
+			screen -S "DST_Master" -p 0 -X stuff "c_shutdown(true)$(printf \\r)"
+		fi
+		if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+			screen -S "DST_Caves" -p 0 -X stuff "c_shutdown(true)$(printf \\r)"
+		fi
+	fi
+	echo "shutdown"
+	sleep 10;
+	cd ~/Steam/steamapps/common/DST_Public/bin
+	screen -dmS "DST_Master" /bin/sh -c "./dontstarve_dedicated_server_nullrenderer -console -conf_dir DoNotStarveTogether -cluster dst -shard Master"
+	screen -dmS "DST_Caves" /bin/sh -c "./dontstarve_dedicated_server_nullrenderer -console -conf_dir DoNotStarveTogether -cluster dst -shard Caves"
+	echo "strat"
+fi
+
+if [[ $(screen -ls | grep -c "DST_Master") -le 0 || $(screen -ls | grep -c "DST_Caves") -le 0 ]]; then
+	if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then
+		screen -S "DST_Master" -p 0 -X stuff "c_shutdown(true)$(printf \\r)"
+	fi
+	if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+		screen -S "DST_Caves" -p 0 -X stuff "c_shutdown(true)$(printf \\r)"
+	fi
+	echo "shutdown"
+	sleep 10;
+	cd ~/Steam/steamapps/common/DST_Public/bin
+	screen -dmS "DST_Master" /bin/sh -c "./dontstarve_dedicated_server_nullrenderer -console -conf_dir DoNotStarveTogether -cluster dst -shard Master"
+	screen -dmS "DST_Caves" /bin/sh -c "./dontstarve_dedicated_server_nullrenderer -console -conf_dir DoNotStarveTogether -cluster dst -shard Caves"
+	echo "strat"
+fi
