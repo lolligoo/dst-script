@@ -1,4 +1,3 @@
-#!/bin/bash
 #-------------------------------------------------------------------------------------------                                                                   
 #-------------------------------------------------------------------------------------------
 
@@ -9,14 +8,8 @@ DST_bin_cmd="./dontstarve_dedicated_server_nullrenderer"
 
 function PreLibrary()
 {
-	sudo apt-get -y update
-	sudo apt-get -y install screen
-	sudo apt-get -y install lib32gcc1
-    sudo apt-get -y install lib32stdc++6 
-	sudo apt-get -y install libcurl4-gnutls-dev:i386
-	sudo apt-get -y install htop
-	sudo apt-get -y install diffutils 
-	sudo apt-get -y install grep
+	sudo apt -y update
+	sudo apt -y install screen lib32gcc1 lib32stdc++6 libcurl4-gnutls-dev:i386 htop diffutils grep p7zip
 }
 
 function update_game()
@@ -49,45 +42,6 @@ function closeserver()
 	    echo -e "\e[92m服务器已关闭！\e[0m"
 	else
 	    echo "游戏服务器未开启！"
-	fi
-}
-
-function savelog()
-{
-    if [ ! -d "${DST_conf_basedir}/backup" ]
-	    then 
-		    mkdir -p ${DST_conf_basedir}/backup
-	fi
-	if [ ! -d "${DST_conf_basedir}/backup/log_archive" ]
-	    then 
-		    mkdir -p ${DST_conf_basedir}/backup/log_archive
-	fi
-    if [ -f "${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_chat_log.txt" ]; then
-		echo "保存聊天日志。。。"
-		DST_now=$(date +"%D %T")
-		echo "${DST_now}" >> "${DST_conf_basedir}/backup/log_archive/server_chat_log.save.txt"
-		cat "${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_chat_log.txt" >> "${DST_conf_basedir}/backup/log_archive/server_chat_log.save.txt"
-	fi
-	
-	echo "删除旧的服务器日志。。。"
-	find "${DST_conf_basedir}/backup/log_archive/server_log."*".txt" -mtime + 20 -delete 2>/dev/null
-	logs_size=$( find "${DST_conf_basedir}/backup/log_archive/server_log."*".txt" -mtime -1 -printf "%s\n" 2>/dev/null | awk '{t+=$1}END{print t}' )
-	if [[ ${logs_size} =~ ^-?[0-9]+$ ]]; then 
-	    logs_size_Mo=$(( ${logs_size} / 1048576 ))					
-	    if [[ $logs_size_Mo > 50 ]]; then
-	        echo -e "\e[31m\e[1m警告: 服务器日志存储过多，删除所有服务器日志。。。\e[0m"
-	        find "${DST_conf_basedir}/backup/log_archive/server_log."*".txt" -delete 2>/dev/null
-            rm "${DST_conf_basedir}/backup/log-updater.txt"
-	        DST_now=$(date +"%D %T")
-	        echo "${DST_now}: 服务器日志存储过多，删除所有服务器日志。"
-		fi
-	fi
-			
-	if [ -f "${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_log.txt" ]; then
-	    echo -e "保存服务器日志。。。"
-		DST_timestamp=$(date +"%s")
-		mkdir "${DST_conf_basedir}/backup/log_archive" 2&>/dev/null
-		cat "${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_log.txt" > "${DST_conf_basedir}/backup/log_archive/server_log.${DST_timestamp}.txt"
 	fi
 }
 
@@ -268,96 +222,19 @@ while :
     do
 	    echo -e "\e[33m================欢迎使用饥荒联机版独立服务器脚本[Ubuntu-Steam]==================\e[0m"
         echo
-        echo -e "\e[92m[1]保存                   [2]回档                  [3]重置世界\e[0m"  
-        echo -e "\e[92m[4]禁止新玩家加入服务器   [5]允许新玩家加入服务器  [6]复活所有玩家\e[0m"
-		echo -e "\e[92m[7]发布公告               [0]返回主菜单\e[0m"
+        echo -e "\e[92m[1]输入控制台代码并执行          [0]返回主菜单\e[0m"  
         echo
         echo -e "\e[33m================================================================================\e[0m"
         echo -e "\e[92m请输入命令代号：\e[0m"
         read cmd  
 		    case $cmd in
                 1)
+				echo -e "\e[92m请输入控制台指令：\e[0m"
+				read cscmd
                 if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then   									        
-	                screen -S "DST_Master" -p 0 -X stuff "c_save()$(printf \\r)"	
+	                screen -S "DST_Master" -p 0 -X stuff "$cscmd$(printf \\r)"	
 	            fi
-	            if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then						        
-		            screen -S "DST_Caves" -p 0 -X stuff "c_save()$(printf \\r)"
-	            fi
-				sleep 10
-				echo -e "\e[92m服务器已保存\e[0m"
-			    console
-			    break;;
-				2)
-				echo -e "\e[92m请输入要回档的天数（不超过6天）\e[0m"
-				read count
-				if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then   									        
-	                screen -S "DST_Master" -p 0 -X stuff "c_rollback($count)$(printf \\r)"	
-	            fi
-				sleep 10
-				if $count > 6
-				then
-				    echo -e "\e[92m回档最大天数\e[0m"
-				else
-				    echo -e "\e[92m已成功回档$count天\e[0m"
-				fi
-				console
-				break;;
-				3)
-				echo -e "\e[92m确认要重置世界 1.是  2.否\e[0m"
-				read sure
-				case $sure in
-				    1)
-				    if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then   									        
-	                   screen -S "DST_Master" -p 0 -X stuff "c_regenerateworld()$(printf \\r)"	
-	                fi
-					sleep 20
-					echo -e "\e[92m世界已重置\e[0m"
-				    break;;
-				    2)
-				    console
-					break;;
-				esac
-				;;
-				4)
-				if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then   									        
-	                screen -S "DST_Master" -p 0 -X stuff "TheNet:SetAllowIncomingConnections(false)$(printf \\r)"	
-	            fi
-	            if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then						        
-		            screen -S "DST_Caves" -p 0 -X stuff "TheNet:SetAllowIncomingConnections(false)$(printf \\r)"
-	            fi
-				sleep 1
-				echo -e "\e[92m已禁止新玩家加入\e[0m"
-				console
-				break;;
-				5)
-				if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then   									        
-	                screen -S "DST_Master" -p 0 -X stuff "TheNet:SetAllowIncomingConnections(true)$(printf \\r)"	
-	            fi
-	            if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then						        
-		            screen -S "DST_Caves" -p 0 -X stuff "TheNet:SetAllowIncomingConnections(true)$(printf \\r)"
-	            fi
-				sleep 1
-				echo -e "\e[92m已允许新玩家加入\e[0m"
-				console
-				break;;
-				6)
-				if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then   									        
-	                screen -S "DST_Master" -p 0 -X stuff "for i, v in ipairs (AllPlayers) do if v ~= nil then if v:HasTag('playerghost') then v:PushEvent('respawnfromghost') end end end$(printf \\r)"	
-	            fi
-	            if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then						        
-		            screen -S "DST_Caves" -p 0 -X stuff "for i, v in ipairs (AllPlayers) do if v ~= nil then if v:HasTag('playerghost') then v:PushEvent('respawnfromghost') end end end$(printf \\r)"
-	            fi
-				console
-				break;;
-				7)
-				echo -e "\e[92m请输入公告内容：\e[0m"
-				read content
-				if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then
-	                screen -S "DST_Master" -p 0 -X stuff "c_announce(\"$content\")$(printf \\r)"
-	            fi
-	            if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
-		            screen -S "DST_Caves" -p 0 -X stuff "c_announce(\"$content\")$(printf \\r)"
-	            fi
+				tail -10 
 				console
 				break;;
 				0)
@@ -422,7 +299,6 @@ function menu()
 				rebootannounce
 				sleep 10
 				closeserver
-                savelog
 				./rebootserver.sh
 				menu
 				break;;

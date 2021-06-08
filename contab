@@ -1,4 +1,4 @@
 #备份
-0 */6 * * * ~/backup
+0 */6 * * * bash ~/backup
 # 更新并重启
-*/5 * * * * ~/updst
+*/5 * * * * bash ~/updst
