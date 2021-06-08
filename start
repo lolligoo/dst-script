@@ -1,0 +1,446 @@
+#!/bin/bash
+#-------------------------------------------------------------------------------------------                                                                   
+#-------------------------------------------------------------------------------------------
+
+# 脚本变量
+DST_conf_dirname="DoNotStarveTogether"   
+DST_conf_basedir="$HOME/.klei" 
+DST_bin_cmd="./dontstarve_dedicated_server_nullrenderer"   
+
+function PreLibrary()
+{
+	sudo apt-get -y update
+	sudo apt-get -y install screen
+	sudo apt-get -y install lib32gcc1
+    sudo apt-get -y install lib32stdc++6 
+	sudo apt-get -y install libcurl4-gnutls-dev:i386
+	sudo apt-get -y install htop
+	sudo apt-get -y install diffutils 
+	sudo apt-get -y install grep
+}
+
+function update_game()
+{
+    if [ ! -d "./steamcmd" ];then
+   	    PreLibrary
+	    mkdir ./steamcmd
+        cd ./steamcmd
+        wget https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz
+        tar -xvzf steamcmd_linux.tar.gz
+        rm -f steamcmd_linux.tar.gz
+		cd $HOME
+	fi
+	cd ./steamcmd
+	   ./steamcmd.sh +@ShutdownOnFailedCommand 1 +@NoPromptForPassword 1 +login anonymous +force_install_dir "$HOME/Steam/steamapps/common/DST_Public" +app_update 343050 validate +quit
+	cd $HOME
+	echo "服务器安装成功！"
+}
+#-beta returnofthembeta
+function closeserver()
+{
+    if [[ $(screen -ls | grep -c "DST_Master") > 0 || $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+	    if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then
+            screen -S "DST_Master" -p 0 -X stuff "c_shutdown(true)$(printf \\r)"
+	    fi
+	    if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+            screen -S "DST_Caves" -p 0 -X stuff "c_shutdown(true)$(printf \\r)"
+	    fi
+	    sleep 10
+	    echo -e "\e[92m服务器已关闭！\e[0m"
+	else
+	    echo "游戏服务器未开启！"
+	fi
+}
+
+function savelog()
+{
+    if [ ! -d "${DST_conf_basedir}/backup" ]
+	    then 
+		    mkdir -p ${DST_conf_basedir}/backup
+	fi
+	if [ ! -d "${DST_conf_basedir}/backup/log_archive" ]
+	    then 
+		    mkdir -p ${DST_conf_basedir}/backup/log_archive
+	fi
+    if [ -f "${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_chat_log.txt" ]; then
+		echo "保存聊天日志。。。"
+		DST_now=$(date +"%D %T")
+		echo "${DST_now}" >> "${DST_conf_basedir}/backup/log_archive/server_chat_log.save.txt"
+		cat "${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_chat_log.txt" >> "${DST_conf_basedir}/backup/log_archive/server_chat_log.save.txt"
+	fi
+	
+	echo "删除旧的服务器日志。。。"
+	find "${DST_conf_basedir}/backup/log_archive/server_log."*".txt" -mtime + 20 -delete 2>/dev/null
+	logs_size=$( find "${DST_conf_basedir}/backup/log_archive/server_log."*".txt" -mtime -1 -printf "%s\n" 2>/dev/null | awk '{t+=$1}END{print t}' )
+	if [[ ${logs_size} =~ ^-?[0-9]+$ ]]; then 
+	    logs_size_Mo=$(( ${logs_size} / 1048576 ))					
+	    if [[ $logs_size_Mo > 50 ]]; then
+	        echo -e "\e[31m\e[1m警告: 服务器日志存储过多，删除所有服务器日志。。。\e[0m"
+	        find "${DST_conf_basedir}/backup/log_archive/server_log."*".txt" -delete 2>/dev/null
+            rm "${DST_conf_basedir}/backup/log-updater.txt"
+	        DST_now=$(date +"%D %T")
+	        echo "${DST_now}: 服务器日志存储过多，删除所有服务器日志。"
+		fi
+	fi
+			
+	if [ -f "${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_log.txt" ]; then
+	    echo -e "保存服务器日志。。。"
+		DST_timestamp=$(date +"%s")
+		mkdir "${DST_conf_basedir}/backup/log_archive" 2&>/dev/null
+		cat "${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_log.txt" > "${DST_conf_basedir}/backup/log_archive/server_log.${DST_timestamp}.txt"
+	fi
+}
+
+function startserver()
+{
+echo -e "\e[92m已有存档：\e[0m"
+		ls -l ${DST_conf_basedir}/${DST_conf_dirname} |awk '/^d/ {print $NF}'
+		echo -e "\e[92m请输入已有存档名称：（提示：在输入框右键鼠标可以粘贴。）\e[0m"
+		read clustername
+		cluster_name=$clustername
+cd "$HOME/Steam/steamapps/common/DST_Public/bin"
+	echo -e "\e[92m请选择要启动的服务器：1.仅地上  2.仅洞穴  3.地上 + 洞穴\e[0m"
+	read shard 
+	case $shard in
+		1)		
+		screen -dmS "DST_Master" /bin/sh -c "$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Master"
+		echo "#!/bin/bash
+masterchatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_chat_log.txt\"
+caveschatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Caves/server_chat_log.txt\"			
+echo \"\" > \"$HOME/Steam/steamapps/common/DST_Public/mods/dedicated_server_mods_setup.lua\"	
+cd $HOME/Steam/steamapps/common/DST_Public/bin
+screen -dmS \"DST_Master\" /bin/sh -c \"$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Master\"
+echo -e \"\e[92m正在重启服务器。。。请稍后。。。\e[0m\"
+sleep 60" > $HOME/rebootserver.sh
+        echo 'if [[ $(screen -ls | grep -c "DST_Master") = 0 && $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+    if [[ $(grep "Your Server Will Not Start !!!" -c "$masterchatlog_path") > 0 ]]; then
+	    echo "服务器开启未成功，请执行关闭服务器命令后再次尝试，并注意令牌是否成功设置且有效。"
+	else
+		echo "服务器开启成功，和小伙伴尽情玩耍吧！"
+    fi
+else
+	if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then
+        if [[ $(grep "Your Server Will Not Start !!!" -c "$masterchatlog_path") > 0 ]]; then
+		    echo "服务器开启未成功，请执行关闭服务器命令后再次尝试，并注意令牌是否成功设置且有效。"
+	    else
+		    echo "服务器开启成功，和小伙伴尽情玩耍吧！"
+		fi
+	fi
+	if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+        if [[ $(grep "Your Server Will Not Start !!!" -c "$caveschatlog_path") > 0 ]]; then
+		    echo "服务器开启未成功，请执行关闭服务器命令后再次尝试，并注意令牌是否成功设置且有效。"
+	    else
+		    echo "服务器开启成功，和小伙伴尽情玩耍吧！"
+	    fi
+	fi
+fi' >> $HOME/rebootserver.sh
+		;;
+		2)
+		screen -dmS "DST_Caves" /bin/sh -c "$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Caves"
+		echo "#!/bin/bash
+masterchatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_chat_log.txt\"
+caveschatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Caves/server_chat_log.txt\"
+echo \"\" > \"$HOME/Steam/steamapps/common/DST_Public/mods/dedicated_server_mods_setup.lua\"		
+cd $HOME/Steam/steamapps/common/DST_Public/bin
+screen -dmS \"DST_Caves\" /bin/sh -c \"$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Caves\"
+echo -e \"\e[92m正在重启服务器。。。请稍后。。。\e[0m\"
+sleep 60" > $HOME/rebootserver.sh
+        echo 'if [[ $(screen -ls | grep -c "DST_Master") = 0 && $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+    if [[ $(grep "Your Server Will Not Start !!!" -c "$masterchatlog_path") > 0 ]]; then
+	    echo "服务器开启未成功，请执行关闭服务器命令后再次尝试，并注意令牌是否成功设置且有效。"
+	else
+		echo "服务器开启成功，和小伙伴尽情玩耍吧！"
+    fi
+else
+	if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then
+        if [[ $(grep "Your Server Will Not Start !!!" -c "$masterchatlog_path") > 0 ]]; then
+		    echo "服务器开启未成功，请执行关闭服务器命令后再次尝试，并注意令牌是否成功设置且有效。"
+	    else
+		    echo "服务器开启成功，和小伙伴尽情玩耍吧！"
+		fi
+	fi
+	if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+        if [[ $(grep "Your Server Will Not Start !!!" -c "$caveschatlog_path") > 0 ]]; then
+		    echo "服务器开启未成功，请执行关闭服务器命令后再次尝试，并注意令牌是否成功设置且有效。"
+	    else
+		    echo "服务器开启成功，和小伙伴尽情玩耍吧！"
+	    fi
+	fi
+fi' >> $HOME/rebootserver.sh
+		;;
+		3)
+		screen -dmS "DST_Master" /bin/sh -c "$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Master"
+		screen -dmS "DST_Caves" /bin/sh -c "$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Caves"
+		echo "#!/bin/bash
+masterchatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_chat_log.txt\"
+caveschatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Caves/server_chat_log.txt\"	
+cd $HOME/Steam/steamapps/common/DST_Public/bin
+screen -dmS \"DST_Master\" /bin/sh -c \"$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Master\"
+screen -dmS \"DST_Caves\" /bin/sh -c \"$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Caves\"
+echo -e \"\e[92m正在重启服务器。。。请稍后。。。\e[0m\"
+sleep 60" > $HOME/rebootserver.sh
+        echo 'if [[ $(screen -ls | grep -c "DST_Master") = 0 && $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+    if [[ $(grep "Your Server Will Not Start !!!" -c "$masterchatlog_path") > 0 ]]; then
+	    echo "服务器开启未成功，请执行关闭服务器命令后再次尝试，并注意令牌是否成功设置且有效。"
+	else
+		echo "服务器开启成功，和小伙伴尽情玩耍吧！"
+    fi
+else
+	if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then
+        if [[ $(grep "Your Server Will Not Start !!!" -c "$masterchatlog_path") > 0 ]]; then
+		    echo "服务器开启未成功，请执行关闭服务器命令后再次尝试，并注意令牌是否成功设置且有效。"
+	    else
+		    echo "服务器开启成功，和小伙伴尽情玩耍吧！"
+		fi
+	fi
+	if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+        if [[ $(grep "Your Server Will Not Start !!!" -c "$caveschatlog_path") > 0 ]]; then
+		    echo "服务器开启未成功，请执行关闭服务器命令后再次尝试，并注意令牌是否成功设置且有效。"
+	    else
+		    echo "服务器开启成功，和小伙伴尽情玩耍吧！"
+	    fi
+	fi
+fi' >> $HOME/rebootserver.sh
+		;;
+	esac
+	chmod u+x $HOME/rebootserver.sh
+	echo -e "\e[92m服务器开启中。。。请稍候。。。\e[0m"
+	sleep 60
+	startcheck
+	menu
+}
+
+function startcheck()
+{
+	if [[ $(screen -ls | grep -c "DST_Master") = 0 && $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+        if [[ $(grep "Your Server Will Not Start !!!" -c "${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_chat_log.txt") > 0 ]]; then
+		    echo "服务器开启未成功，请执行关闭服务器命令后再次尝试，并注意令牌是否成功设置且有效。"
+	    else
+		    echo "服务器开启成功，和小伙伴尽情玩耍吧！"
+		fi
+	else
+	    if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then
+            if [[ $(grep "Your Server Will Not Start !!!" -c "${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_chat_log.txt") > 0 ]]; then
+		        echo "服务器开启未成功，请执行关闭服务器命令后再次尝试，并注意令牌是否成功设置且有效。"
+	        else
+		        echo "服务器开启成功，和小伙伴尽情玩耍吧！"
+		    fi
+	    fi
+	    if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+            if [[ $(grep "Your Server Will Not Start !!!" -c "${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Caves/server_chat_log.txt") > 0 ]]; then
+		        echo "服务器开启未成功，请执行关闭服务器命令后再次尝试，并注意令牌是否成功设置且有效。"
+	        else
+		        echo "服务器开启成功，和小伙伴尽情玩耍吧！"
+		    fi
+	    fi
+	fi
+}
+
+function checkserver()
+{    
+	if [[ $(screen -ls | grep -c "DST_Master") > 0 || $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+	    echo -e "\e[92m即将跳转游戏服务器窗口，要退回本界面，在游戏服务器窗口按 ctrl+a+d 再执行脚本即可。\e[0m"
+		sleep 3
+	    if [[ $(screen -ls | grep -c "DST_Master") > 0 && $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+	        screen -r DST_Master
+	    fi
+	    if [[ $(screen -ls | grep -c "DST_Master") > 0 && $(screen -ls | grep -c "DST_Caves") = 0 ]]; then
+	        screen -r DST_Master
+	    fi
+	    if [[ $(screen -ls | grep -c "DST_Master") = 0 && $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+	        screen -r DST_Caves
+	    fi
+	else
+	    echo "游戏服务器未开启！"
+		menu
+	fi
+}
+
+function exitshell()
+{
+   clear
+   cd $HOME
+}
+
+function console()
+{
+while :
+    do
+	    echo -e "\e[33m================欢迎使用饥荒联机版独立服务器脚本[Ubuntu-Steam]==================\e[0m"
+        echo
+        echo -e "\e[92m[1]保存                   [2]回档                  [3]重置世界\e[0m"  
+        echo -e "\e[92m[4]禁止新玩家加入服务器   [5]允许新玩家加入服务器  [6]复活所有玩家\e[0m"
+		echo -e "\e[92m[7]发布公告               [0]返回主菜单\e[0m"
+        echo
+        echo -e "\e[33m================================================================================\e[0m"
+        echo -e "\e[92m请输入命令代号：\e[0m"
+        read cmd  
+		    case $cmd in
+                1)
+                if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then   									        
+	                screen -S "DST_Master" -p 0 -X stuff "c_save()$(printf \\r)"	
+	            fi
+	            if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then						        
+		            screen -S "DST_Caves" -p 0 -X stuff "c_save()$(printf \\r)"
+	            fi
+				sleep 10
+				echo -e "\e[92m服务器已保存\e[0m"
+			    console
+			    break;;
+				2)
+				echo -e "\e[92m请输入要回档的天数（不超过6天）\e[0m"
+				read count
+				if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then   									        
+	                screen -S "DST_Master" -p 0 -X stuff "c_rollback($count)$(printf \\r)"	
+	            fi
+				sleep 10
+				if $count > 6
+				then
+				    echo -e "\e[92m回档最大天数\e[0m"
+				else
+				    echo -e "\e[92m已成功回档$count天\e[0m"
+				fi
+				console
+				break;;
+				3)
+				echo -e "\e[92m确认要重置世界 1.是  2.否\e[0m"
+				read sure
+				case $sure in
+				    1)
+				    if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then   									        
+	                   screen -S "DST_Master" -p 0 -X stuff "c_regenerateworld()$(printf \\r)"	
+	                fi
+					sleep 20
+					echo -e "\e[92m世界已重置\e[0m"
+				    break;;
+				    2)
+				    console
+					break;;
+				esac
+				;;
+				4)
+				if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then   									        
+	                screen -S "DST_Master" -p 0 -X stuff "TheNet:SetAllowIncomingConnections(false)$(printf \\r)"	
+	            fi
+	            if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then						        
+		            screen -S "DST_Caves" -p 0 -X stuff "TheNet:SetAllowIncomingConnections(false)$(printf \\r)"
+	            fi
+				sleep 1
+				echo -e "\e[92m已禁止新玩家加入\e[0m"
+				console
+				break;;
+				5)
+				if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then   									        
+	                screen -S "DST_Master" -p 0 -X stuff "TheNet:SetAllowIncomingConnections(true)$(printf \\r)"	
+	            fi
+	            if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then						        
+		            screen -S "DST_Caves" -p 0 -X stuff "TheNet:SetAllowIncomingConnections(true)$(printf \\r)"
+	            fi
+				sleep 1
+				echo -e "\e[92m已允许新玩家加入\e[0m"
+				console
+				break;;
+				6)
+				if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then   									        
+	                screen -S "DST_Master" -p 0 -X stuff "for i, v in ipairs (AllPlayers) do if v ~= nil then if v:HasTag('playerghost') then v:PushEvent('respawnfromghost') end end end$(printf \\r)"	
+	            fi
+	            if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then						        
+		            screen -S "DST_Caves" -p 0 -X stuff "for i, v in ipairs (AllPlayers) do if v ~= nil then if v:HasTag('playerghost') then v:PushEvent('respawnfromghost') end end end$(printf \\r)"
+	            fi
+				console
+				break;;
+				7)
+				echo -e "\e[92m请输入公告内容：\e[0m"
+				read content
+				if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then
+	                screen -S "DST_Master" -p 0 -X stuff "c_announce(\"$content\")$(printf \\r)"
+	            fi
+	            if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+		            screen -S "DST_Caves" -p 0 -X stuff "c_announce(\"$content\")$(printf \\r)"
+	            fi
+				console
+				break;;
+				0)
+				menu
+				break;;
+		    esac
+	done
+}
+
+function rebootannounce()
+{
+    if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then   									        
+	    screen -S "DST_Master" -p 0 -X stuff "c_announce(\"服务器设置因做了改动需要重启，预计耗时三分钟，给你带来的不便还请谅解！\")$(printf \\r)"	
+	fi
+	if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then						        
+		screen -S "DST_Caves" -p 0 -X stuff "c_announce(\"服务器设置因做了改动需要重启，预计耗时三分钟，给你带来的不便还请谅解！\")$(printf \\r)"
+	fi
+}
+
+function openswap()
+{
+    sudo dd if=/dev/zero of=/swapfile bs=1M count=2048
+    sudo mkswap /swapfile
+    sudo swapon /swapfile
+	sudo chmod 0646 /etc/fstab
+    echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
+	clear
+    echo -e "\e[92m虚拟内存已开启！\e[0m"
+}
+
+function menu()
+{    
+    while :
+    do
+	    echo -e "\e[33m================欢迎使用饥荒联机版独立服务器脚本[Ubuntu-Steam]==================\e[0m"
+		echo	
+		echo -e "\e[31m首次使用请将本地电脑上的MOD上传到\e[0m"
+		echo -e "\e[31m云服务器$HOME/Steam/steamapps/common/DST_*/mods目录下\e[0m"
+		echo
+        echo -e "\e[92m[0]安装及初始化服务器    [1]开启服务器           [2]关闭服务器\e[0m"  
+        echo -e "\e[92m[3]重启服务器            [4]查看游戏服务器状态   [5]退出本脚本\e[0m"
+		echo -e "\e[92m[6]控制台                [7]开启虚拟内存（单服务器开洞穴使用）\e[0m"
+        echo  
+        echo -e "\e[33m================================================================================\e[0m"
+        echo -e "\e[92m请输入命令代号：\e[0m"
+        read cmd  
+		    case $cmd in
+			    0)
+				update_game
+				closeserver
+				menu
+				break;;
+				1)
+				startserver
+				menu
+				break;;
+			    2)
+				closeserver
+				menu
+                break;;
+				3)
+				rebootannounce
+				sleep 10
+				closeserver
+                savelog
+				./rebootserver.sh
+				menu
+				break;;
+			    4)
+				checkserver
+			    break;;
+				5)
+				exitshell
+			    break;;
+				6)
+				console
+				menu
+				break;;
+                7)
+				openswap
+				menu
+			    break;;					
+		    esac
+    done
+}
+menu
