@@ -1,0 +1,11 @@
+#!/bin/bash
+
+echo -e "\e[32m开始备份...\e[0m"
+cd .klei/DoNotStarveTogether/backup
+7z a -r $(date "+%Y%m%d%H%M%S") ../dst/
+echo -e "\e[32m备份结束...\e[0m"
+echo -e "\e[32m删除旧备份...\e[0m"
+find ./ -mtime +2 -name "*.7z" | xargs rm -f #删除超过三天的备份
+echo -e "\e[32m完成...\e[0m"
+#同步到nextcloud
+#nextcloudcmd -u <用户名> -p <密码> ~/.klei/DoNotStarveTogether/backup/ https://<nextcloud域名>/remote.php/webdav/<nextcloud文件夹>
