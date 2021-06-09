@@ -1,4 +1,4 @@
-
+#!/bin/bash
 old_version=$(cat ~/Steam/steamapps/common/DST_Public/version.txt)
 
 cd steamcmd/

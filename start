@@ -1,3 +1,4 @@
+#!/bin/bash
 #-------------------------------------------------------------------------------------------                                                                   
 #-------------------------------------------------------------------------------------------
 
@@ -264,7 +265,35 @@ function openswap()
 	clear
     echo -e "\e[92m虚拟内存已开启！\e[0m"
 }
-
+function modm()
+{
+	while :
+    do
+	    echo -e "\e[33m================mod管理==================\e[0m"
+        echo
+        echo -e "\e[92m[1]添加单独mod		[2]添加mod合集		[3]列出已添加的mod		[0]返回主菜单\e[0m"  
+        echo
+        echo -e "\e[33m================================================================================\e[0m"
+        echo -e "\e[92m请输入命令代号：\e[0m"
+        read cmd  
+		    case $cmd in
+                1)
+				modm
+				break;;
+				2)
+				modm
+				break;;
+				3)
+				modm
+				break;;
+				0)
+				menu
+				break;;
+		    esac
+	done
+	#ServerModCollectionSetup("379114180")
+	#ServerModSetup("350811795")
+}
 function menu()
 {    
     while :
@@ -277,6 +306,7 @@ function menu()
         echo -e "\e[92m[0]安装及初始化服务器    [1]开启服务器           [2]关闭服务器\e[0m"  
         echo -e "\e[92m[3]重启服务器            [4]查看游戏服务器状态   [5]退出本脚本\e[0m"
 		echo -e "\e[92m[6]控制台                [7]开启虚拟内存（单服务器开洞穴使用）\e[0m"
+		echo -e "\e[92m[8]mod管理\e[0m"
         echo  
         echo -e "\e[33m================================================================================\e[0m"
         echo -e "\e[92m请输入命令代号：\e[0m"
@@ -315,7 +345,11 @@ function menu()
                 7)
 				openswap
 				menu
-			    break;;					
+			    break;;		
+				8)
+				modm
+				menu
+				break;;			
 		    esac
     done
 }

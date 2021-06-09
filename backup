@@ -1,4 +1,4 @@
-
+#!/bin/bash
 echo -e "\e[32m开始备份...\e[0m"
 cd .klei/DoNotStarveTogether/backup
 7z a -r $(date "+%Y%m%d%H%M%S") ../dst/
