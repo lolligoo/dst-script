@@ -3,7 +3,7 @@
 # 脚本变量
 DST_conf_dirname="DoNotStarveTogether"   
 DST_conf_basedir="$HOME/.klei" 
-DST_bin_cmd="./dontstarve_dedicated_server_nullrenderer"   
+DST_bin_cmd="./dontstarve_dedicated_server_nullrenderer_x64"   
 
 function PreLibrary()
 {
@@ -61,7 +61,7 @@ cd "$HOME/Steam/steamapps/common/DST_Public/bin"
 masterchatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_chat_log.txt\"
 caveschatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Caves/server_chat_log.txt\"			
 echo \"\" > \"$HOME/Steam/steamapps/common/DST_Public/mods/dedicated_server_mods_setup.lua\"	
-cd $HOME/Steam/steamapps/common/DST_Public/bin
+cd $HOME/Steam/steamapps/common/DST_Public/bin64
 screen -dmS \"DST_Master\" /bin/sh -c \"$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Master\"
 echo -e \"\e[92m正在重启服务器。。。请稍后。。。\e[0m\"
 sleep 60" > $HOME/rebootserver.sh
@@ -94,7 +94,7 @@ fi' >> $HOME/rebootserver.sh
 masterchatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_chat_log.txt\"
 caveschatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Caves/server_chat_log.txt\"
 echo \"\" > \"$HOME/Steam/steamapps/common/DST_Public/mods/dedicated_server_mods_setup.lua\"		
-cd $HOME/Steam/steamapps/common/DST_Public/bin
+cd $HOME/Steam/steamapps/common/DST_Public/bin64
 screen -dmS \"DST_Caves\" /bin/sh -c \"$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Caves\"
 echo -e \"\e[92m正在重启服务器。。。请稍后。。。\e[0m\"
 sleep 60" > $HOME/rebootserver.sh
@@ -127,7 +127,7 @@ fi' >> $HOME/rebootserver.sh
 		echo "#!/bin/bash
 masterchatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_chat_log.txt\"
 caveschatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Caves/server_chat_log.txt\"	
-cd $HOME/Steam/steamapps/common/DST_Public/bin
+cd $HOME/Steam/steamapps/common/DST_Public/bin64
 screen -dmS \"DST_Master\" /bin/sh -c \"$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Master\"
 screen -dmS \"DST_Caves\" /bin/sh -c \"$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Caves\"
 echo -e \"\e[92m正在重启服务器。。。请稍后。。。\e[0m\"
