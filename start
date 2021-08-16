@@ -58,8 +58,8 @@ cd "$HOME/Steam/steamapps/common/DST_Public/bin"
 		1)		
 		screen -dmS "DST_Master" /bin/sh -c "$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Master"
 		echo "#!/bin/bash
-masterchatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_chat_log.txt\"
-caveschatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Caves/server_chat_log.txt\"			
+masterchatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_log.txt\"
+caveschatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Caves/server_log.txt\"			
 echo \"\" > \"$HOME/Steam/steamapps/common/DST_Public/mods/dedicated_server_mods_setup.lua\"	
 cd $HOME/Steam/steamapps/common/DST_Public/bin64
 screen -dmS \"DST_Master\" /bin/sh -c \"$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Master\"
@@ -91,8 +91,8 @@ fi' >> $HOME/rebootserver.sh
 		2)
 		screen -dmS "DST_Caves" /bin/sh -c "$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Caves"
 		echo "#!/bin/bash
-masterchatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_chat_log.txt\"
-caveschatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Caves/server_chat_log.txt\"
+masterchatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_log.txt\"
+caveschatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Caves/server_log.txt\"
 echo \"\" > \"$HOME/Steam/steamapps/common/DST_Public/mods/dedicated_server_mods_setup.lua\"		
 cd $HOME/Steam/steamapps/common/DST_Public/bin64
 screen -dmS \"DST_Caves\" /bin/sh -c \"$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Caves\"
@@ -125,8 +125,8 @@ fi' >> $HOME/rebootserver.sh
 		screen -dmS "DST_Master" /bin/sh -c "$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Master"
 		screen -dmS "DST_Caves" /bin/sh -c "$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Caves"
 		echo "#!/bin/bash
-masterchatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_chat_log.txt\"
-caveschatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Caves/server_chat_log.txt\"	
+masterchatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_log.txt\"
+caveschatlog_path=\"${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Caves/server_log.txt\"	
 cd $HOME/Steam/steamapps/common/DST_Public/bin64
 screen -dmS \"DST_Master\" /bin/sh -c \"$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Master\"
 screen -dmS \"DST_Caves\" /bin/sh -c \"$DST_bin_cmd -console -conf_dir $DST_conf_dirname -cluster $cluster_name -shard Caves\"
@@ -166,21 +166,21 @@ fi' >> $HOME/rebootserver.sh
 function startcheck()
 {
 	if [[ $(screen -ls | grep -c "DST_Master") = 0 && $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
-        if [[ $(grep "Your Server Will Not Start !!!" -c "${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_chat_log.txt") > 0 ]]; then
+        if [[ $(grep "Your Server Will Not Start !!!" -c "${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_log.txt") > 0 ]]; then
 		    echo "服务器开启未成功，请执行关闭服务器命令后再次尝试，并注意令牌是否成功设置且有效。"
 	    else
 		    echo "服务器开启成功，和小伙伴尽情玩耍吧！"
 		fi
 	else
 	    if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then
-            if [[ $(grep "Your Server Will Not Start !!!" -c "${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_chat_log.txt") > 0 ]]; then
+            if [[ $(grep "Your Server Will Not Start !!!" -c "${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Master/server_log.txt") > 0 ]]; then
 		        echo "服务器开启未成功，请执行关闭服务器命令后再次尝试，并注意令牌是否成功设置且有效。"
 	        else
 		        echo "服务器开启成功，和小伙伴尽情玩耍吧！"
 		    fi
 	    fi
 	    if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
-            if [[ $(grep "Your Server Will Not Start !!!" -c "${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Caves/server_chat_log.txt") > 0 ]]; then
+            if [[ $(grep "Your Server Will Not Start !!!" -c "${DST_conf_basedir}/${DST_conf_dirname}/${cluster_name}/Caves/server_log.txt") > 0 ]]; then
 		        echo "服务器开启未成功，请执行关闭服务器命令后再次尝试，并注意令牌是否成功设置且有效。"
 	        else
 		        echo "服务器开启成功，和小伙伴尽情玩耍吧！"
@@ -301,10 +301,10 @@ function menu()
 		echo -e "\e[31m首次使用请将本地电脑上的MOD上传到\e[0m"
 		echo -e "\e[31m云服务器$HOME/Steam/steamapps/common/DST_*/mods目录下\e[0m"
 		echo
-        echo -e "\e[92m[0]安装及初始化服务器    [1]开启服务器           [2]关闭服务器\e[0m"  
-        echo -e "\e[92m[3]重启服务器            [4]查看游戏服务器状态   [5]退出本脚本\e[0m"
-		echo -e "\e[92m[6]控制台                [7]开启虚拟内存（单服务器开洞穴使用）\e[0m"
-		echo -e "\e[92m[8]mod管理\e[0m"
+        echo -e "\e[92m[0]安装及初始化服务器      [1]开启服务器           [2]关闭服务器\e[0m"  
+        echo -e "\e[92m[3]重启服务器             [4]查看游戏服务器状态    [5]退出本脚本\e[0m"
+		echo -e "\e[92m[6]控制台                 [7]开启虚拟内存（单服务器开洞穴使用）\e[0m"
+		#echo -e "\e[92m[8]mod管理\e[0m"
         echo  
         echo -e "\e[33m================================================================================\e[0m"
         echo -e "\e[92m请输入命令代号：\e[0m"
@@ -344,10 +344,10 @@ function menu()
 				openswap
 				menu
 			    break;;		
-				8)
-				modm
-				menu
-				break;;			
+				# 8)
+				# modm
+				# menu
+				# break;;			
 		    esac
     done
 }
