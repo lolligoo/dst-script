@@ -302,7 +302,7 @@ function menu()
 		echo -e "\e[31m云服务器$HOME/Steam/steamapps/common/DST_*/mods目录下\e[0m"
 		echo
         echo -e "\e[92m[0]安装及初始化服务器      [1]开启服务器           [2]关闭服务器\e[0m"  
-        echo -e "\e[92m[3]重启服务器             [4]查看游戏服务器状态    [5]退出本脚本\e[0m"
+        echo -e "\e[92m[3]重启服务器              [4]查看游戏服务器状态    [5]退出本脚本\e[0m"
 		echo -e "\e[92m[6]控制台                 [7]开启虚拟内存（单服务器开洞穴使用）\e[0m"
 		#echo -e "\e[92m[8]mod管理\e[0m"
         echo  
