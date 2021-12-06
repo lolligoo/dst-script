@@ -1,0 +1,27 @@
+#!/bin/bash
+
+cd $HOME/.klei/DoNotStarveTogether/dst/Master
+if grep -q "服务器需要从 Steam 创意工坊获得最新版本" server_log.txt; then
+	if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then   									        
+	    screen -S "DST_Master" -p 0 -X stuff "c_announce(\"服务器需要重启更新，20s后重启，预计耗时三分钟！\")$(printf \\r)"	
+	fi
+	if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then						        
+		screen -S "DST_Caves" -p 0 -X stuff "c_announce(\"服务器有更新，20s后重启，预计耗时三分钟！\")$(printf \\r)"
+	fi
+	echo "announce"
+	sleep 20;
+	if [[ $(screen -ls | grep -c "DST_Master") > 0 || $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+		if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then
+			screen -S "DST_Master" -p 0 -X stuff "c_shutdown(true)$(printf \\r)"
+		fi
+		if [[ $(screen -ls | grep -c "DST_Caves") > 0 ]]; then
+			screen -S "DST_Caves" -p 0 -X stuff "c_shutdown(true)$(printf \\r)"
+		fi
+	fi
+	echo "shutdown"
+	#sleep 10;
+	cd ~/Steam/steamapps/common/DST_Public/bin64
+	screen -dmS "DST_Master" /bin/sh -c "./dontstarve_dedicated_server_nullrenderer_x64 -console -conf_dir DoNotStarveTogether -cluster dst -shard Master"
+	screen -dmS "DST_Caves" /bin/sh -c "./dontstarve_dedicated_server_nullrenderer_x64 -console -conf_dir DoNotStarveTogether -cluster dst -shard Caves"
+	echo "strat"
+fi

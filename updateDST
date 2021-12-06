@@ -24,7 +24,7 @@ if [[ "$old_version" != "$new_version" ]]; then
 		fi
 	fi
 	echo "shutdown"
-	sleep 10;
+	#sleep 10;
 	cd ~/Steam/steamapps/common/DST_Public/bin64
 	screen -dmS "DST_Master" /bin/sh -c "./dontstarve_dedicated_server_nullrenderer_x64 -console -conf_dir DoNotStarveTogether -cluster dst -shard Master"
 	screen -dmS "DST_Caves" /bin/sh -c "./dontstarve_dedicated_server_nullrenderer_x64 -console -conf_dir DoNotStarveTogether -cluster dst -shard Caves"
@@ -39,7 +39,7 @@ if [[ $(screen -ls | grep -c "DST_Master") -le 0 || $(screen -ls | grep -c "DST_
 		screen -S "DST_Caves" -p 0 -X stuff "c_shutdown(true)$(printf \\r)"
 	fi
 	echo "shutdown"
-	sleep 10;
+	#sleep 10;
 	cd ~/Steam/steamapps/common/DST_Public/bin64
 	screen -dmS "DST_Master" /bin/sh -c "./dontstarve_dedicated_server_nullrenderer_x64 -console -conf_dir DoNotStarveTogether -cluster dst -shard Master"
 	screen -dmS "DST_Caves" /bin/sh -c "./dontstarve_dedicated_server_nullrenderer_x64 -console -conf_dir DoNotStarveTogether -cluster dst -shard Caves"

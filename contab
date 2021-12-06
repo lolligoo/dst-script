@@ -1,4 +1,6 @@
 #备份
-0 */6 * * * bash ~/backup
+0 */6 * * * ~/backup
 # 更新并重启
-*/5 0-12 * * * bash ~/updst
+*/5 0-12 * * * ~/updst
+# 更新mod并重启
+*/5 * * * * ~/updateDSTMods
