@@ -19,7 +19,7 @@ if grep -q "服务器需要从 Steam 创意工坊获得最新版本" server_log.
 		fi
 	fi
 	echo "shutdown"
-	#sleep 10;
+	sleep 10;
 	cd ~/Steam/steamapps/common/DST_Public/bin64
 	screen -dmS "DST_Master" /bin/sh -c "./dontstarve_dedicated_server_nullrenderer_x64 -console -conf_dir DoNotStarveTogether -cluster dst -shard Master"
 	screen -dmS "DST_Caves" /bin/sh -c "./dontstarve_dedicated_server_nullrenderer_x64 -console -conf_dir DoNotStarveTogether -cluster dst -shard Caves"
