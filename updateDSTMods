@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd $HOME/.klei/DoNotStarveTogether/dst/Master
-if grep -q "服务器需要从 Steam 创意工坊获得最新版本" server_log.txt; then
+if grep -q "is out of date and needs to be updated for new users to be able to join the server." server_log.txt; then
 	if [[ $(screen -ls | grep -c "DST_Master") > 0 ]]; then   									        
 	    screen -S "DST_Master" -p 0 -X stuff "c_announce(\"服务器需要重启更新，20s后重启，预计耗时三分钟！\")$(printf \\r)"	
 	fi
